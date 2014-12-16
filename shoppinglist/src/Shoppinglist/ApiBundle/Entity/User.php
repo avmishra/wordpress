@@ -70,12 +70,6 @@ class User
     /**
      * @var string
      * 
-     * @Assert\NotBlank(message="Mobile No. should not be blank.")
-     * @Assert\Regex(
-     *     pattern="/^[\d]$/",
-     *     match=false,
-     *     message="Mobile No. should contain numeric value."
-     * )
      * @ORM\Column(name="mobile_no", type="string", length=15)
      */
     private $mobileNo;

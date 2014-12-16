@@ -127,6 +127,90 @@ class UserController extends BaseController
         );
     }
     
+    /**
+     * 
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @Rest\Post
+     */
+    public function facebook_signupAction(Request $request) 
+    {
+        $returnData = array('status' => '404', 'message' => '', 'data' => array());
+        $email = $request->get('email');
+        $em = $this->getDoctrine()->getManager();
+        $userData = $em->getRepository('ShoppinglistApiBundle:User')->findByEmail($email);
+        if ($userData) {
+            $userObj = $userData[0];
+            $returnData['status'] = '200';
+            $returnData['data']['user_id'] = $userObj->getIdUser();
+            $returnData['data']['email'] = $userObj->getEmail();
+            $returnData['data']['first_name'] = $userObj->getFirstName();
+            $returnData['data']['last_name'] = $userObj->getLastName();
+            $returnData['data']['api_key'] = $userObj->getApiKey();
+            $returnData['data']['status'] = $userObj->getStatus();
+            $returnData['data']['email_verified'] = $userObj->getEmailVerified();
+        } else {
+            try{
+                $pass = bin2hex(openssl_random_pseudo_bytes(3));
+                $user = new User();
+                $gender = 0;
+                if ($request->get('gender') == 'male') {
+                    $gender = 1;
+                }
+                $user->setEmail($request->get('email'));
+                $user->setPass($pass);
+                $user->setFirstName($request->get('first_name'));
+                $user->setLastName($request->get('last_name'));
+                $user->setGender($gender);
+                $user->setApiKey('SL' . time() . 'AV');
+                $user->setCreatedAt();
+                $user->setUpdatedAt();
+                $user->setEmailVerified(1);
+                $user->setStatus(1);
+                $user->setIsAdmin(0);
+                $validator = $this->get('validator');
+                $errorList = $validator->validate($user);
+                if (count($errorList) == 0) {
+                    $user->setPass(md5($user->getPass()));
+                    $em = $this->getDoctrine()->getManager();
+                    $em->persist($user);
+                    $em->flush();
+                    if ($user->getIdUser()) {
+                        // send email for new password
+                        $message = \Swift_Message::newInstance()
+                            ->setSubject('Signup with facebook')
+                            ->setFrom('avmishra.org@gmail.com', 'Shoppinglist')
+                            ->setTo($user->getEmail())
+                            ->setBody($this->renderView('ShoppinglistApiBundle:Email:emailSignupWithFacebook.txt.twig', 
+                                    array(
+                                        'pass' => $pass,
+                                        'email' => $user->getEmail(),
+                                        'first_name' => $user->getFirstName()
+                                    )));
+                            $this->get('mailer')->send($message);
+
+                        $returnData['status'] = '200';
+                        $returnData['data']['user_id'] = $user->getIdUser();
+                        $returnData['data']['email'] = $user->getEmail();
+                        $returnData['data']['first_name'] = $user->getFirstName();
+                        $returnData['data']['last_name'] = $user->getLastName();
+                        $returnData['data']['api_key'] = $user->getApiKey();
+                        $returnData['data']['status'] = $user->getStatus();
+                        $returnData['data']['email_verified'] = $user->getEmailVerified();
+                    }
+                    $returnData['status'] = '200';
+                } else {
+                    $returnData['message'] = $this->_getErrorMessage($errorList);
+                }
+            } catch (\Exception $exp) {
+                $returnData['message'] = $exp->getMessage();
+            }
+        }
+        
+        return new JSonResponse(
+            $this->container->get('serializer')->serialize($returnData, 'json'),
+            200
+        );
+    }
     
     /**
      * 
