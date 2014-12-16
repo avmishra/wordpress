@@ -114,7 +114,6 @@ class UserController extends BaseController
                     $returnData['data']['status'] = $user->getStatus();
                     $returnData['data']['email_verified'] = $user->getEmailVerified();
                 }
-                $returnData['status'] = '200';
             } else {
                 $returnData['message'] = $this->_getErrorMessage($errorList);
             }
@@ -160,6 +159,7 @@ class UserController extends BaseController
                 $user->setPass($pass);
                 $user->setFirstName($request->get('first_name'));
                 $user->setLastName($request->get('last_name'));
+                $user->setMobileNo('');
                 $user->setGender($gender);
                 $user->setApiKey('SL' . time() . 'AV');
                 $user->setCreatedAt();
@@ -197,7 +197,6 @@ class UserController extends BaseController
                         $returnData['data']['status'] = $user->getStatus();
                         $returnData['data']['email_verified'] = $user->getEmailVerified();
                     }
-                    $returnData['status'] = '200';
                 } else {
                     $returnData['message'] = $this->_getErrorMessage($errorList);
                 }
