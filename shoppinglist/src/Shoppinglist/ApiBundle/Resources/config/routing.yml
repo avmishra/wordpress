@@ -1,0 +1,19 @@
+api_user:
+    type: rest
+    resource: Shoppinglist\ApiBundle\Controller\UserController
+    prefix: /v1
+    
+api_product:
+    type: rest
+    resource: Shoppinglist\ApiBundle\Controller\ProductController
+    prefix: /v1
+    
+api_shoppinglist:
+    type: rest
+    resource: Shoppinglist\ApiBundle\Controller\ShoppinglistController
+    prefix: /v1
+    
+api_shoppinglist_item:
+    type: rest
+    resource: Shoppinglist\ApiBundle\Controller\ShoppinglistItemController
+    prefix: /v1

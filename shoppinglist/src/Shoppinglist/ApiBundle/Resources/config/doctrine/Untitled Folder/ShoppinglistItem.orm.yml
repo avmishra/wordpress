@@ -1,0 +1,60 @@
+Shoppinglist\ApiBundle\Entity\ShoppinglistItem:
+    type: entity
+    table: shoppinglist_item
+    indexes:
+        id_shoppinglist:
+            columns:
+                - fk_shoppinglist
+    id:
+        idShoppinglistItem:
+            type: integer
+            nullable: false
+            unsigned: false
+            comment: ''
+            id: true
+            column: id_shoppinglist_item
+            generator:
+                strategy: IDENTITY
+    fields:
+        productName:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            comment: ''
+            column: product_name
+        unit:
+            type: string
+            nullable: false
+            length: 45
+            fixed: false
+            comment: ''
+        quantity:
+            type: float
+            nullable: false
+            precision: 5
+            scale: 2
+            comment: ''
+            default: '0.00'
+        picked:
+            type: boolean
+            nullable: false
+            comment: ''
+            default: '0'
+        createdAt:
+            type: datetime
+            nullable: false
+            comment: ''
+            default: CURRENT_TIMESTAMP
+            column: created_at
+    manyToOne:
+        fkShoppinglist:
+            targetEntity: Shoppinglist
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                fk_shoppinglist:
+                    referencedColumnName: id_shoppinglist
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

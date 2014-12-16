@@ -1,0 +1,52 @@
+Shoppinglist\ApiBundle\Entity\Product:
+    type: entity
+    table: product
+    id:
+        idProduct:
+            type: integer
+            nullable: false
+            unsigned: false
+            comment: ''
+            id: true
+            column: id_product
+            generator:
+                strategy: IDENTITY
+    fields:
+        productName:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            comment: ''
+            column: product_name
+        fkCategory:
+            type: integer
+            nullable: false
+            unsigned: false
+            comment: ''
+            column: fk_category
+        addedBy:
+            type: integer
+            nullable: false
+            unsigned: false
+            comment: ''
+            default: '1'
+            column: added_by
+        status:
+            type: boolean
+            nullable: false
+            comment: ''
+            default: '1'
+        createdAt:
+            type: datetime
+            nullable: false
+            comment: ''
+            default: '0000-00-00 00:00:00'
+            column: created_at
+        updatedAt:
+            type: datetime
+            nullable: false
+            comment: ''
+            default: '0000-00-00 00:00:00'
+            column: updated_at
+    lifecycleCallbacks: {  }

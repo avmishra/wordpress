@@ -1,0 +1,33 @@
+Shoppinglist\ApiBundle\Entity\Category:
+    type: entity
+    table: category
+    id:
+        idCategory:
+            type: integer
+            nullable: false
+            unsigned: false
+            comment: ''
+            id: true
+            column: id_category
+            generator:
+                strategy: IDENTITY
+    fields:
+        categoryName:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            comment: ''
+            column: category_name
+        status:
+            type: boolean
+            nullable: false
+            comment: ''
+            default: '1'
+        createdAt:
+            type: datetime
+            nullable: false
+            comment: ''
+            default: CURRENT_TIMESTAMP
+            column: created_at
+    lifecycleCallbacks: {  }

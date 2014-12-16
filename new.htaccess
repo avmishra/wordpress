@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} -s [OR]
+RewriteCond %{REQUEST_FILENAME} -l [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+
+RewriteCond %{QUERY_STRING} !vardump
+RewriteRule (.*) /$1?vardump&thereq=%{THE_REQUEST}&reqhost=%{HTTP_HOST} [R=301,L,QSA]
+
+RewriteRule ^.*$ - [NC,L]
+RewriteRule ^.*$ index.php [NC,L]   

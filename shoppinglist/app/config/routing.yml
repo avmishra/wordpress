@@ -1,0 +1,5 @@
+shoppinglist_api:
+    resource: "@ShoppinglistApiBundle/Resources/config/routing.yml"
+    
+hello:
+    resource: "@AcmeHelloBundle/Resources/config/routing.yml"
