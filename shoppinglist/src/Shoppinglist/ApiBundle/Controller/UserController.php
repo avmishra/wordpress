@@ -84,6 +84,7 @@ class UserController extends BaseController
             $user->setEmailVerified(0);
             $user->setStatus(1);
             $user->setIsAdmin(0);
+            $user->setOauthSource('S');
             $user->setEmailVerificationCode($emailVerificationCode);
             $validator = $this->get('validator');
             $errorList = $validator->validate($user);
@@ -92,7 +93,7 @@ class UserController extends BaseController
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($user);
                 $em->flush();
-                if ($user->getIdUser()) {   
+                if ($user->getIdUser()) {
                     // send email for email verification
                     $message = \Swift_Message::newInstance()
                         ->setSubject('Email Authentication Code')
@@ -118,7 +119,7 @@ class UserController extends BaseController
                 $returnData['message'] = $this->_getErrorMessage($errorList);
             }
         } catch (\Exception $exp) {
-            $returnData['message'] = $exp->getMessage() ;//'Provided email already exist.';
+            $returnData['message'] = $exp->getMessage();
         }
         return new JSonResponse(
             $this->container->get('serializer')->serialize($returnData, 'json'),
@@ -127,11 +128,13 @@ class UserController extends BaseController
     }
     
     /**
+     * This function will make sign up for user when user are comming from 
+     * any oauth api
      * 
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @Rest\Post
      */
-    public function facebook_signupAction(Request $request) 
+    public function oauth_signupAction(Request $request) 
     {
         $returnData = array('status' => '404', 'message' => '', 'data' => array());
         $email = $request->get('email');
@@ -146,6 +149,11 @@ class UserController extends BaseController
             $returnData['data']['last_name'] = $userObj->getLastName();
             $returnData['data']['api_key'] = $userObj->getApiKey();
             $returnData['data']['status'] = $userObj->getStatus();
+            if (!$userObj->getEmailVerified()) {
+                $userObj->setEmailVerified(1);
+                $em->persist($userObj);
+                $em->flush();
+            }
             $returnData['data']['email_verified'] = $userObj->getEmailVerified();
         } else {
             try{
@@ -154,6 +162,12 @@ class UserController extends BaseController
                 $gender = 0;
                 if ($request->get('gender') == 'male') {
                     $gender = 1;
+                }
+                $sourceName = 'google';
+                $sourceNameDb = 'G';
+                if ($request->get('oauth_source') == 'F') {
+                    $sourceName = 'facebook';
+                    $sourceNameDb = 'F';
                 }
                 $user->setEmail($request->get('email'));
                 $user->setPass($pass);
@@ -167,6 +181,7 @@ class UserController extends BaseController
                 $user->setEmailVerified(1);
                 $user->setStatus(1);
                 $user->setIsAdmin(0);
+                $user->setOauthSource($sourceNameDb);
                 $validator = $this->get('validator');
                 $errorList = $validator->validate($user);
                 if (count($errorList) == 0) {
@@ -177,7 +192,7 @@ class UserController extends BaseController
                     if ($user->getIdUser()) {
                         // send email for new password
                         $message = \Swift_Message::newInstance()
-                            ->setSubject('Signup with facebook')
+                            ->setSubject('Signup with ' . $sourceName)
                             ->setFrom('avmishra.org@gmail.com', 'Shoppinglist')
                             ->setTo($user->getEmail())
                             ->setBody($this->renderView('ShoppinglistApiBundle:Email:emailSignupWithFacebook.txt.twig', 

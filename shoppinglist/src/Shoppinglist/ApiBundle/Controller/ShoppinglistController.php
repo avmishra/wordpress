@@ -231,6 +231,7 @@ class ShoppinglistController extends BaseController
                         $shoppinglistItem->setUnit($item['unit']);
                         $shoppinglistItem->setCreatedAt();
                         $shoppinglistItem->setPicked($item['picked']);
+                        $shoppinglistItem->setNotes($item['notes']);
                         $em->persist($shoppinglistItem);
                     }
                 }
@@ -251,6 +252,7 @@ class ShoppinglistController extends BaseController
                         $shoppinglistItemObj->setPicked($item['picked']);
                         $shoppinglistItemObj->setQuantity($item['quantity']);
                         $shoppinglistItemObj->setUnit($item['unit']);
+                        $shoppinglistItemObj->setNotes($item['notes']);
                         $em->persist($shoppinglistItemObj);
                         $em->flush();
                     }
@@ -265,6 +267,7 @@ class ShoppinglistController extends BaseController
                         $shoppinglistItemObj->setPicked($item['picked']);
                         $shoppinglistItemObj->setQuantity($item['quantity']);
                         $shoppinglistItemObj->setUnit($item['unit']);
+                        $shoppinglistItemObj->setNotes($item['notes']);
                         $em->persist($shoppinglistItemObj);
                         $em->flush();
                     }

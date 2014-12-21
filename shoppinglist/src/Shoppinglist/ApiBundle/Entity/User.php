@@ -101,6 +101,13 @@ class User
      * @ORM\Column(name="email_verified", type="smallint")
      */
     private $emailVerified;
+    
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="oauth_source", type="string", length=1)
+     */
+    private $oauthSource;
 
     /**
      * @var integer
@@ -372,6 +379,29 @@ class User
         return $this->emailVerified;
     }
 
+    /**
+     * Set oauthSource
+     *
+     * @param string $source
+     * @return User
+     */
+    public function setOauthSource($source)
+    {
+        $this->oauthSource = $source;
+
+        return $this;
+    }
+
+    /**
+     * Get status
+     *
+     * @return string 
+     */
+    public function getOauthSource()
+    {
+        return $this->oauthSource;
+    }
+    
     /**
      * Set status
      *
