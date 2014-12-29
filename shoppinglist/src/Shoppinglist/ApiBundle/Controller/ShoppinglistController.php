@@ -218,24 +218,39 @@ class ShoppinglistController extends BaseController
             $returnData['message'] = 'Not authorized';
             return $this->getJsonResponse($returnData);
         }
-        $data = $request->get('data');
+        $email = $request->get('email');
+        $id = $request->get('id');
         
         try {
             $em = $this->getDoctrine()->getManager();
-            $userData = $em->getRepository('ShoppinglistApiBundle:User')->findByEmail($data['email']);
-            if ($userData) {
-                $userObj = $userData[0];
-                
+            $data = $em->getRepository('ShoppinglistApiBundle:User')->findByEmail($email);
+            if ($data) {
+                $userObj = $data[0];
+                $shoppinglistObj = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->findOneBy(
+                    array('idShoppinglist' => $id)
+                );
+                if  ($shoppinglistObj) {
+                    // save shoppinglist_user
+                    $shoppinglistUser = new ShoppinglistUser();
+                    $shoppinglistUser->setFkShoppinglist($shoppinglistObj);
+                    $shoppinglistUser->setFkUser($userObj);
+                    $shoppinglistUser->setAddedBy($userData->getIdUser());
+                    $em->persist($shoppinglistUser);
+                    $em->flush();
+                    $returnData['status'] = '200';
+                    $returnData['message'] = 'Shopping shared successfully';
+                }
             } else {
                 // send email to download the shopping list app.
                 // send email for email verification
                 $message = \Swift_Message::newInstance()
-                    ->setSubject($userObj->getFirstName() . ' suggesting you a Shoppinglist App')
+                    ->setSubject($userData->getFirstName() . ' suggesting you a Shoppinglist App')
                     ->setFrom('avmishra.org@gmail.com', 'Shoppinglist')
-                    ->setTo($data['email'])
+                    ->setTo($email)
+                    ->setContentType("text/html")
                     ->setBody($this->renderView('ShoppinglistApiBundle:Email:appSuggestion.html.twig', 
                             array(
-                                'first_name' => $userObj->getFirstName()
+                                'first_name' => $userData->getFirstName()
                             )
                         )
                     );
