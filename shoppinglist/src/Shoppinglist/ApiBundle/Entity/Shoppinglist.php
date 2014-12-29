@@ -56,9 +56,18 @@ class Shoppinglist
      * })
      */
     private $fkUser;
-
-
-
+    
+    /**
+     * @ORM\ManyToMany(targetEntity="Shoppinglist\ApiBundle\Entity\User")
+     * @ORM\JoinTable(
+     *      name="shoppinglist_user",
+     *      joinColumns={@ORM\JoinColumn(name="fk_shoppinglist", referencedColumnName="id_shoppinglist")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="fk_user", referencedColumnName="id_user")}
+     *  )
+     */
+    private $shoppinglistUser;
+    
+    
     /**
      * Get idShoppinglist
      *
@@ -149,15 +158,38 @@ class Shoppinglist
         $this->fkUser = $fkUser;
 
         return $this;
-    }
+}
 
     /**
      * Get fkUser
      *
      * @return \Shoppinglist\ApiBundle\Entity\User 
      */
-    public function getFkUser()
+    public function getUser()
     {
         return $this->fkUser;
+    }
+    
+    /**
+     * Set shoppinglistUser
+     *
+     * @param \Shoppinglist\ApiBundle\Entity\User $shoppinglistUser
+     * @return Shoppinglist
+     */
+    public function setShoppinglistUser(\Shoppinglist\ApiBundle\Entity\User $shoppinglistUser = null)
+    {
+        $this->shoppinglistUser = $shoppinglistUser;
+
+        return $this;
+}
+
+    /**
+     * Get shoppinglistUser
+     *
+     * @return \Shoppinglist\ApiBundle\Entity\User 
+     */
+    public function getShoppinglistUser()
+    {
+        return $this->shoppinglistUser;
     }
 }

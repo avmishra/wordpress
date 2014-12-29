@@ -17,30 +17,90 @@ class ShoppinglistRepository extends EntityRepository
      * This function will get all shoppinglists of given user
      * 
      */
-    public function getAllListing($userId, $limit = 30, $offset = 1)
+    public function getAllListing($userId, $limit = 50, $offset = 1)
     {
-        return $this->getEntityManager()
-                ->createQuery(
-                    'select s.shoppinglistName, s.idShoppinglist, s.createdAt '
-                    . ' from ShoppinglistApiBundle:Shoppinglist s '
-                    . 'where s.fkUser = :userId order by s.createdAt DESC'   
-                        
-                )->setMaxResults($limit)
-                ->setFirstResult($offset)
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+        
+        $qb->select(array('s.shoppinglistName', 's.idShoppinglist', 's.createdAt'))->from('ShoppinglistApiBundle:ShoppinglistUser', 'su')
+                ->innerJoin('su.fkShoppinglist', 's')
+                ->where('su.fkUser = :userId')
                 ->setParameter(':userId', $userId)
-                ->getResult();
+                ->orderBy('s.createdAt', 'DESC')
+                ->setMaxResults($limit)
+                ->setFirstResult($offset)
+                ;
+        $query = $qb->getQuery();
+        $results = $query->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+
+        return $results;
+        
     }
     
-    public function deleteShoppinglistByIds($ids, $userId)
+    /**
+     * This function return a single shoppinglist of given id and user id
+     * 
+     * @param int $id
+     * @param int $userId
+     * @return array
+     */
+    public function getShoppinglistByIdAndUserId($id, $userId)
     {
-        return $this->getEntityManager()
-                ->createQuery(
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+        
+        $qb->select('s')->from('ShoppinglistApiBundle:Shoppinglist', 's')
+                ->innerJoin('s.shoppinglistUser', 'su')
+                ->where('su.idUser = :userId')
+                ->andWhere('s.idShoppinglist = :id')
+                ->setParameter(':id', $id)
+                ->setParameter(':userId', $userId)
+                ;
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
+    
+    /**
+     * This function will delete the user for given shoppinglist
+     * if shoppinglist will don't have any user delete shoppinglist
+     * 
+     * @param int $ids
+     * @param int $userId
+     * @return bool
+     */
+    public function deleteShoppinglistUserByIds($ids, $userId)
+    {
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+        
+        // delete user from shoppinglist_user table
+        $deleteResult = $em->createQuery(
                     'DELETE '
-                    . ' FROM ShoppinglistApiBundle:Shoppinglist s '
-                    . 'WHERE s.idShoppinglist IN (:ids) AND s.fkUser = :userId'   
-                        
+                    . ' FROM ShoppinglistApiBundle:ShoppinglistUser su '
+                    . 'WHERE su.fkShoppinglist = :ids AND su.fkUser = :userId'        
                 )->setParameter(':ids', $ids)
                 ->setParameter(':userId', $userId)
                 ->execute();
+        
+        // if shoppinglist_user dont have any user for given shoppinglist then delete that shoppinglist too
+        if ($deleteResult) {
+            $qb->select('count(su.fkShoppinglist)')->from('ShoppinglistApiBundle:ShoppinglistUser', 'su')
+                    ->andWhere('su.fkShoppinglist = :id')
+                    ->setParameter(':id', $ids);
+            $query = $qb->getQuery();
+            $totalUser = $results = $query->getSingleScalarResult();
+            
+            if ($totalUser == 0) {
+                $deleteResult = $em->createQuery(
+                    'DELETE '
+                    . ' FROM ShoppinglistApiBundle:Shoppinglist s '
+                    . ' WHERE s.idShoppinglist = :ids'        
+                )->setParameter(':ids', $ids)
+                ->execute();
+            }
+            
+        }
+        return $deleteResult;
     }
 }

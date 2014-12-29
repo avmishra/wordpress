@@ -79,7 +79,43 @@ class ShoppinglistItem
      * @ORM\Column(name="notes", type="string", length=255)
      */
     private $notes;
+    
+    /**
+     * @var \Shoppinglist\ApiBundle\Entity\User
+     * 
+     * @Assert\NotBlank(message="Please choose user")
+     * @Assert\GreaterThan(value=0, message="Invalid user")
+     * @ORM\ManyToOne(targetEntity="Shoppinglist\ApiBundle\Entity\User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="fk_user", referencedColumnName="id_user")
+     * })
+     */
+    private $fkUser;
 
+
+    /**
+     * Set fkUser
+     *
+     * @param integer $fkUser
+     * @return ShoppinglistItem
+     */
+    public function setFkUser($fkUser)
+    {
+        $this->fkUser = $fkUser;
+
+        return $this;
+    }
+
+    /**
+     * Get fkUser
+     *
+     * @return \Shoppinglist\ApiBundle\Entity\User
+     */
+    public function getFkUser()
+    {
+        return $this->fkUser;
+    }
+    
     /**
      * Get idShoppinglistItem
      *

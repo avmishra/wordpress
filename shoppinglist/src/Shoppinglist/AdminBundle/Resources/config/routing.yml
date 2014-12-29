@@ -1,0 +1,2 @@
+admin_default:
+    resource: Shoppinglist\AdminBundle\Controller\DefaultController

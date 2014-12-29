@@ -12,20 +12,6 @@ use Doctrine\ORM\EntityRepository;
  */
 class ShoppinglistItemRepository extends EntityRepository
 {
-    /**
-     * 
-     * not in use
-     */
-    public function updatePickup($id, $status)
-    {
-        return $this->getEntityManager()
-            ->createQuery('UPDATE '
-                    . 'ShoppinglistApiBundle:ShoppinglistItem i SET i.picked = :picked'
-                    . 'WHERE i.idShoppinglistItem = :id'
-            )->setParameter(':id', $id)
-             ->setParameter(':picked', $status)
-            ->getResult();
-    }
     
     /**
      * This function will return all items of given shoppinglist id

@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request,
 use Shoppinglist\ApiBundle\Entity\Shoppinglist;
 use Shoppinglist\ApiBundle\Entity\ShoppinglistItem;
 use Shoppinglist\ApiBundle\Entity\User;
+use Shoppinglist\ApiBundle\Entity\ShoppinglistUser;
 
 /*
  * 
@@ -16,101 +17,6 @@ use Shoppinglist\ApiBundle\Entity\User;
 
 class ShoppinglistController extends BaseController
 {
-
-    /**
-     * not in use
-     * 
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @return \Shoppinglist\ApiBundle\Controller\JSonResponse
-     * @Rest\Post
-     */
-    public function createAction(Request $request)
-    {
-        $returnData = array('status' => '404', 'message' => '');
-
-        $apiKey = $request->get('api_key');
-        $userData = $this->isValidUser($apiKey);
-        if (!$userData) {
-            $returnData['message'] = 'Not authorized';
-            return $this->getJsonResponse($returnData);
-        }
-
-        try {
-            $shoppinglist = new Shoppinglist();
-            $shoppinglist->setFkUser($userData);
-            $shoppinglist->setShoppinglistName($request->get('shoppinglist_name'));
-            $shoppinglist->setCreatedAt();
-            $shoppinglist->setStatus(1);
-            $validator = $this->get('validator');
-            $errorList = $validator->validate($shoppinglist);
-            if (count($errorList) == 0) {
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($shoppinglist);
-                $em->flush();
-                if ($shoppinglist->getIdShoppinglist()) {
-                    $returnData['status'] = '200';
-                    $returnData['id_shoppinglist'] = $shoppinglist->getIdShoppinglist();
-                    $returnData['message'] = 'New shopping created successfully.';
-                }
-                $returnData['status'] = '200';
-            } else {
-                $returnData['message'] = $this->_getErrorMessage($errorList);
-            }
-        } catch (\Exception $exp) {
-            $returnData['message'] = $exp->getMessage();
-        }
-        
-        return $this->getJsonResponse($returnData);
-    }
-    
-    /**
-     * not in use
-     * 
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @return \Shoppinglist\ApiBundle\Controller\JSonResponse
-     * @Rest\Post
-     */
-    public function editAction(Request $request)
-    {
-        $returnData = array('status' => '404', 'message' => 'No record found.');
-
-        $apiKey = $request->get('api_key');
-        $userData = $this->isValidUser($apiKey);
-        if (!$userData) {
-            $returnData['message'] = 'Not authorized';
-            return $this->getJsonResponse($returnData);
-        }
-
-        try {
-            $em = $this->getDoctrine()->getManager();
-            $shoppinglist = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->findOneBy(
-                array('idShoppinglist' => $request->get('id_shoppinglist'), 'fkUser' => $userData->getIdUser())
-            );
-            
-            if ($shoppinglist != NULL) {
-                $shoppinglist->setShoppinglistName($request->get('shoppinglist_name'));
-                $validator = $this->get('validator');
-                $errorList = $validator->validate($shoppinglist);
-                if (count($errorList) == 0) {
-                    $em->persist($shoppinglist);
-                    $em->flush();
-                    if ($shoppinglist->getIdShoppinglist()) {
-                        $returnData['status'] = '200';
-                        $returnData['id_shoppinglist'] = $shoppinglist->getIdShoppinglist();
-                        $returnData['message'] = 'Shopping updated successfully';
-                    }
-                    $returnData['status'] = '200';
-                } else {
-                    $returnData['message'] = $this->_getErrorMessage($errorList);
-                }
-            }
-        } catch (\Exception $exp) {
-            $returnData['message'] = $exp->getMessage();
-        }
-        
-        return $this->getJsonResponse($returnData);
-    }
-
     /**
      * This function will used to add user product
      * 
@@ -197,7 +103,7 @@ class ShoppinglistController extends BaseController
             
             // first delete all shoppinglist
             foreach ($syncData['deleted_shoppinglist'] as $id) {
-                $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->deleteShoppinglistByIds($id, $userData->getIdUser());
+                $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->deleteShoppinglistUserByIds($id, $userData->getIdUser());
             }
             
             // second delete all items
@@ -210,11 +116,14 @@ class ShoppinglistController extends BaseController
             foreach ($syncData['sync_shoppinglist'] as $shoppinglist) {
                 // if shopping have id then update otherwise insert
                 if (!empty($shoppinglist['id_shoppinglist'])) {
-                    $shoppinglistObj = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->findOneBy(
-                        array('idShoppinglist' => $shoppinglist['id_shoppinglist'], 'fkUser' => $userData->getIdUser())
+                    $shoppinglistData = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->getShoppinglistByIdAndUserId(
+                        $shoppinglist['id_shoppinglist'], $userData->getIdUser()
                     );
-                    $shoppinglistObj->setShoppinglistName($shoppinglist['shoppinglist_name']);
-                    $em->persist($shoppinglistObj);
+                    if ($shoppinglistData) {
+                        $shoppinglistObj = $shoppinglistData[0];
+                        $shoppinglistObj->setShoppinglistName($shoppinglist['shoppinglist_name']);
+                        $em->persist($shoppinglistObj);
+                    }
                 } else {
                     $shoppinglistObj = new Shoppinglist();
                     $shoppinglistObj->setFkUser($userData);
@@ -222,9 +131,18 @@ class ShoppinglistController extends BaseController
                     $shoppinglistObj->setCreatedAt();
                     $shoppinglistObj->setStatus(1);
                     $em->persist($shoppinglistObj);
+                    
+                    // save shoppinglist_user
+                    $shoppinglistUser = new ShoppinglistUser();
+                    $shoppinglistUser->setFkShoppinglist($shoppinglistObj);
+                    $shoppinglistUser->setFkUser($userData);
+                    $shoppinglistUser->setAddedBy($userData->getIdUser());
+                    $em->persist($shoppinglistUser);
+                    
                     // if shopping having items then save them too
                     foreach ($shoppinglist['items'] as $item) {
                         $shoppinglistItem = new ShoppinglistItem();
+                        $shoppinglistItem->setFkUser($userData);
                         $shoppinglistItem->setProductName($item['product_name']);
                         $shoppinglistItem->setFkShoppinglist($shoppinglistObj);
                         $shoppinglistItem->setQuantity($item['quantity']);
@@ -257,11 +175,13 @@ class ShoppinglistController extends BaseController
                         $em->flush();
                     }
                 } else {
-                    $shoppinglistObj = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->findOneBy(
-                        array('idShoppinglist' => $item['id_shoppinglist'], 'fkUser' => $userData->getIdUser())
+                    $shoppinglistData = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->getShoppinglistByIdAndUserId(
+                        $item['id_shoppinglist'], $userData->getIdUser()
                     );
-                    if ($shoppinglistObj) {
+                    if ($shoppinglistData) {
+                        $shoppinglistObj = $shoppinglistData[0];
                         $shoppinglistItemObj = new ShoppinglistItem();
+                        $shoppinglistItemObj->setFkUser($userData);
                         $shoppinglistItemObj->setFkShoppinglist($shoppinglistObj);
                         $shoppinglistItemObj->setProductName($item['product_name']);
                         $shoppinglistItemObj->setPicked($item['picked']);
@@ -281,41 +201,7 @@ class ShoppinglistController extends BaseController
         
         return $this->getJsonResponse($returnData);
     }
-    
-    
-   /**
-     * not in use
-     * 
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @return \Shoppinglist\ApiBundle\Controller\JSonResponse
-     * @Rest\Post
-     */
-    public function deleteAction(Request $request)
-    {
-        $returnData = array('status' => '404', 'message' => 'No record found.');
 
-        $apiKey = $request->get('api_key');
-        $userData = $this->isValidUser($apiKey);
-        if (!$userData) {
-            $returnData['message'] = 'Not authorized';
-            return $this->getJsonResponse($returnData);
-        }
-
-        try {
-            $em = $this->getDoctrine()->getManager();
-            $shoppinglist = $em->getRepository('ShoppinglistApiBundle:Shoppinglist')->findOneBy(
-                array('idShoppinglist' => $request->get('id_shoppinglist'), 'fkUser' => $userData->getIdUser())
-            );
-            $em->remove($shoppinglist);
-            print_r($em->flush());
-        } catch (\Exception $exp) {
-            $returnData['message'] = $exp->getMessage();
-        }
-        
-        return $this->getJsonResponse($returnData);
-    }
-    
-    
     private function _getErrorMessage($errorList)
     {
         $errorMsg = '';

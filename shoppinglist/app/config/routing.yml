@@ -1,3 +1,7 @@
+shoppinglist_admin:
+    resource: "@ShoppinglistAdminBundle/Resources/config/routing.yml"
+    prefix:   /admin
+
 shoppinglist_api:
     resource: "@ShoppinglistApiBundle/Resources/config/routing.yml"
     

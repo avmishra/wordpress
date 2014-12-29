@@ -44,9 +44,9 @@
     
     function doTest() {
         $.ajax({
-            type:'POST',
+            type:'GET',
             data:$("#signup_form").serialize(),
-                url:'http://shoppinglist.localhost/app_dev.php/v1/users/sendforgotpasswordcode',
+                url:'http://shoppinglist.localhost/app_dev.php/v1/shoppinglists/list?api_key=SL1416511610AV',
             success:function(data) {
                 var json = $.parseJSON(data);
                 console.log(json);

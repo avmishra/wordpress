@@ -21,6 +21,7 @@ class AppKernel extends Kernel
             new JMS\SerializerBundle\JMSSerializerBundle($this),
             new Shoppinglist\ApiBundle\ShoppinglistApiBundle(),
 	    new Nelmio\CorsBundle\NelmioCorsBundle(),
+            new Shoppinglist\AdminBundle\ShoppinglistAdminBundle(),
         );
 
         if (in_array($this->getEnvironment(), array('dev', 'test'))) {
