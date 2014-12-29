@@ -201,6 +201,55 @@ class ShoppinglistController extends BaseController
         
         return $this->getJsonResponse($returnData);
     }
+    
+    /**
+     * This function will share the shoppinglist with given email
+     * 
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return \Shoppinglist\ApiBundle\Controller\JSonResponse
+     * @Rest\Post
+     */
+    public function share_shoppinglistAction(Request $request)
+    {
+        $returnData = array('status' => '404', 'message' => 'Unknow error occured.');
+        $apiKey = $request->get('api_key');
+        $userData = $this->isValidUser($apiKey);
+        if (!$userData) {
+            $returnData['message'] = 'Not authorized';
+            return $this->getJsonResponse($returnData);
+        }
+        $data = $request->get('data');
+        
+        try {
+            $em = $this->getDoctrine()->getManager();
+            $userData = $em->getRepository('ShoppinglistApiBundle:User')->findByEmail($data['email']);
+            if ($userData) {
+                $userObj = $userData[0];
+                
+            } else {
+                // send email to download the shopping list app.
+                // send email for email verification
+                $message = \Swift_Message::newInstance()
+                    ->setSubject($userObj->getFirstName() . ' suggesting you a Shoppinglist App')
+                    ->setFrom('avmishra.org@gmail.com', 'Shoppinglist')
+                    ->setTo($data['email'])
+                    ->setBody($this->renderView('ShoppinglistApiBundle:Email:appSuggestion.html.twig', 
+                            array(
+                                'first_name' => $userObj->getFirstName()
+                            )
+                        )
+                    );
+                $this->get('mailer')->send($message);
+                $returnData['status'] = '200';
+                $returnData['message'] = 'It seems, person is not Shoppinglist user but we have sent him an email that you want to share a shopping list';
+            }
+            
+        } catch (\Exception $exp) {
+            $returnData['message'] = $exp->getMessage();
+        }
+        
+        return $this->getJsonResponse($returnData);
+    }
 
     private function _getErrorMessage($errorList)
     {
